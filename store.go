@@ -55,7 +55,7 @@ func runCloudStore(clArgs []string) {
 					names := extractNames(cert)
 					org := cert.Subject.Organization
 					if len(org) > 0 {
-						_, err = db.Exec("INSERT INTO certificates (ip, organization, common_name, san) VALUES (?, ?, ?, ?) ON CONFLICT(ip) DO UPDATE SET organization = excluded.organization, common_name = excluded.common_name, san = excluded.san", ip, org, names[0], strings.Join(names[1:], ","))
+						_, err = db.Exec("INSERT INTO certificates (ip, organization, common_name, san) VALUES (?, ?, ?, ?) ON CONFLICT(ip) DO UPDATE SET organization = excluded.organization, common_name = excluded.common_name, san = excluded.san", ip, org[0], names[0], strings.Join(names[1:], ","))
 						if err != nil {
 							panic(err)
 						}

@@ -2,8 +2,13 @@
 CloudRecon tool
 
 # Install
+** You must have CGO enabled, and may have to install gcc to run CloudRecon**
 ```sh
-go install -v github.com/g0ldencybersec/CloudRecon@latest
+sudo apt install gcc
+```
+
+```sh
+go install github.com/g0ldencybersec/CloudRecon@latest
 ```
 
 # Description

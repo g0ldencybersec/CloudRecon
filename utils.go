@@ -24,24 +24,19 @@ func getSSLCert(ip string, timeout int, dialer *net.Dialer) (*x509.Certificate, 
 }
 
 // IPsFromCIDR generates a slice of IP strings from the given CIDR
-func IPsFromCIDR(cidr string) ([]string, error) {
+func IPsFromCIDR(cidr string, chanInput chan string, ports []string) error {
 	ip, ipnet, err := net.ParseCIDR(cidr)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	var ips []string
 	for ip := ip.Mask(ipnet.Mask); ipnet.Contains(ip); inc(ip) {
-		ips = append(ips, ip.String())
+		for _, port := range ports {
+			chanInput <- ip.String() + ":" + port
+		}
 	}
 
-	// Handle single IP CIDR
-	if len(ips) == 1 {
-		return ips, nil
-	}
-
-	// Remove network address and broadcast address
-	return ips[1 : len(ips)-1], nil
+	return nil
 }
 
 // inc increments an IP address
@@ -90,14 +85,9 @@ func isCIDR(value string) bool {
 func processInput(argItem string, chanInput chan string, ports []string) {
 	argItem = strings.TrimSpace(argItem)
 	if isCIDR(argItem) {
-		ipAddresses, err := IPsFromCIDR(argItem)
+		err := IPsFromCIDR(argItem, chanInput, ports)
 		if err != nil {
 			panic("unable to parse CIDR" + argItem)
-		}
-		for _, ip := range ipAddresses {
-			for _, port := range ports {
-				chanInput <- ip + ":" + port
-			}
 		}
 	} else {
 		// feed atomic host to input channel

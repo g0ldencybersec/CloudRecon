@@ -17,6 +17,7 @@ type ScrapeArgs struct {
 	PortList    string
 	Help        bool
 	Input       string
+	AllOutput   bool
 }
 
 func runCloudScrape(clArgs []string) {
@@ -32,11 +33,13 @@ func runCloudScrape(clArgs []string) {
 	var inputwg sync.WaitGroup
 	for i := 0; i < args.Concurrency; i++ {
 		inputwg.Add(1)
-		go func() {
+		go func(AllOutput bool) {
 			for ip := range inputChannel {
 				cert, err := getSSLCert(ip, args.Timeout, dialer)
 				if err != nil {
-					fmt.Printf("Failed to get SSL certificate from %s\n", ip)
+					if AllOutput {
+						fmt.Printf("Failed to get SSL certificate from %s\n", ip)
+					}
 					continue
 				} else {
 					names := extractNames(cert)
@@ -45,7 +48,7 @@ func runCloudScrape(clArgs []string) {
 
 			}
 			inputwg.Done()
-		}()
+		}(args.AllOutput)
 	}
 
 	intakeFunction(inputChannel, args.Ports, args.Input)
@@ -63,6 +66,7 @@ func parseScrapeCLI(clArgs []string) ScrapeArgs {
 	scrapeCommand.IntVar(&args.Timeout, "t", 4, "Timeout for TLS handshake")
 	scrapeCommand.BoolVar(&args.Help, "h", false, "print usage!")
 	scrapeCommand.StringVar(&args.Input, "i", "NONE", "Either IPs & CIDRs separated by commas, or a file with IPs/CIDRs on each line")
+	scrapeCommand.BoolVar(&args.AllOutput, "a", false, "Add this flag if you want to see all output including failures")
 
 	scrapeCommand.Parse(clArgs)
 

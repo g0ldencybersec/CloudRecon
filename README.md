@@ -2,8 +2,8 @@
 Finding assets from certificates! Scan the web!
 Tool presented @DEFCON 31
 
-BY: 
-- Gunnar Andrews (@G0LDEN_infosec)
+## BY 
+### Gunnar Andrews (@G0LDEN_infosec)
 <div id="badges">
   <a href="https://www.linkedin.com/in/gunnar-andrews-317995136/">
     <img src="https://img.shields.io/badge/LinkedIn-blue?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn Badge"/>
@@ -16,7 +16,7 @@ BY:
   </a>
 </div>
 
-- Jason Haddix (@Jhaddix)
+### Jason Haddix (@Jhaddix)
 <div id="badges">
   <a href="https://www.linkedin.com/in/jhaddix/">
     <img src="https://img.shields.io/badge/LinkedIn-blue?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn Badge"/>

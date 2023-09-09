@@ -73,11 +73,12 @@ Subcommands:
 **SCRAPE**
 ```sh
 scrape [options] -i <IPs/CIDRs or File>
+  -a    Add this flag if you want to see all output including failures
   -c int
         How many goroutines running concurrently (default 100)
   -h    print usage!
   -i string
-        Either IPs & CIDRs separated by commas, or a file with IPs/CIDRs on each line (default "NONE")
+        Either IPs & CIDRs separated by commas, or a file with IPs/CIDRs on each line (default "NONE"                                                                                                                         )
   -p string
         TLS ports to check for certificates (default "443")
   -t int

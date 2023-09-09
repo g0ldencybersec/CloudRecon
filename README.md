@@ -1,5 +1,33 @@
 # CloudRecon
-CloudRecon tool
+Finding assets from certificates! Scan the web!
+Tool presented @DEFCON 31
+
+BY: 
+- Gunnar Andrews (@G0LDEN_infosec)
+<div id="badges">
+  <a href="https://www.linkedin.com/in/gunnar-andrews-317995136/">
+    <img src="https://img.shields.io/badge/LinkedIn-blue?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn Badge"/>
+  </a>
+  <a href="https://www.youtube.com/@g0lden1">
+    <img src="https://img.shields.io/badge/YouTube-red?style=for-the-badge&logo=youtube&logoColor=white" alt="Youtube Badge"/>
+  </a>
+  <a href="https://twitter.com/G0LDEN_infosec">
+    <img src="https://img.shields.io/badge/Twitter-blue?style=for-the-badge&logo=twitter&logoColor=white" alt="Twitter Badge"/>
+  </a>
+</div>
+
+- Jason Haddix (@Jhaddix)
+<div id="badges">
+  <a href="https://www.linkedin.com/in/jhaddix/">
+    <img src="https://img.shields.io/badge/LinkedIn-blue?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn Badge"/>
+  </a>
+  <a href="https://www.youtube.com/@jhaddix">
+    <img src="https://img.shields.io/badge/YouTube-red?style=for-the-badge&logo=youtube&logoColor=white" alt="Youtube Badge"/>
+  </a>
+  <a href="https://twitter.com/Jhaddix">
+    <img src="https://img.shields.io/badge/Twitter-blue?style=for-the-badge&logo=twitter&logoColor=white" alt="Twitter Badge"/>
+  </a>
+</div>
 
 # Install
 ** You must have CGO enabled, and may have to install gcc to run CloudRecon**

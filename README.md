@@ -39,6 +39,9 @@ sudo apt install gcc
 go install github.com/g0ldencybersec/CloudRecon@latest
 ```
 
+Note:
+Don't forget to [set your `GOPATH`](https://github.com/golang/go/wiki/SettingGOPATH) before installing.
+
 # Description
 **CloudRecon** 
 

@@ -56,7 +56,6 @@ func extractNames(cert *x509.Certificate) []string {
 
 func intakeFunction(chanInput chan string, ports []string, input string) {
 	if _, err := os.Stat(input); err == nil {
-		fmt.Printf("Scraping certs for IPs / CIDRs in file %s\n\n", input)
 		readFile, err := os.Open(input)
 		if err != nil {
 			fmt.Println(err)

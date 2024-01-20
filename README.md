@@ -66,7 +66,6 @@ wget https://github.com/lord-alfred/ipranges/blob/main/all/ipv4_merged.txt
 CloudRecon scrape -i ipv4_merged.txt -j | tee -a certdb.json
 ```
 
-cloudrecon scrape - Scrape given IPs and output CNs & SANs to stdout
 Input Support: Either IPs & CIDRs separated by commas, or a file with IPs/CIDRs on each line, or file contains ip:port format list. 
 
 **MAIN**
@@ -106,7 +105,7 @@ store [options] -i <IPs/CIDRs or File>
         String of the DB you want to connect to and save certs! (default "certificates.db")
   -h    print usage!
   -i string
-        Either IPs & CIDRs separated by commas, or a file with IPs/CIDRs on each line (default "NONE")
+        Either IPs & CIDRs separated by commas, or a file with IPs/CIDRs on each line, or file contains ip:port format list. (default "NONE")
   -p string
         TLS ports to check for certificates (default "443")
   -t int

@@ -88,8 +88,7 @@ func isHostPort(value string) bool {
 
 func processInput(argItem string, chanInput chan string, ports []string) {
 	argItem = strings.TrimSpace(argItem)
-	if strings.Contains(argItem, ":") {
-		// If it contains a colon, treat it as IP:port combination
+	if isHostPort(argItem) {
 		chanInput <- argItem
 	} else if isCIDR(argItem) {
 		err := IPsFromCIDR(argItem, chanInput, ports)
@@ -97,7 +96,6 @@ func processInput(argItem string, chanInput chan string, ports []string) {
 			panic("unable to parse CIDR" + argItem)
 		}
 	} else {
-		// Feed atomic host to input channel
 		for _, port := range ports {
 			chanInput <- argItem + ":" + port
 		}

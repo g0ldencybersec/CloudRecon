@@ -58,6 +58,17 @@ Store - a tool to retrieve IPs certs and download all their Orgs, CNs, and SANs.
 Retr - a tool to parse and search through the downloaded certs for keywords.
 
 # Usage
+
+## Get Started
+```
+## Don't forget to run in TMUX / Screen session
+wget https://github.com/lord-alfred/ipranges/blob/main/all/ipv4_merged.txt
+CloudRecon scrape -i ipv4_merged.txt -j | tee -a certdb.json
+```
+
+cloudrecon scrape - Scrape given IPs and output CNs & SANs to stdout
+Input Support: Either IPs & CIDRs separated by commas, or a file with IPs/CIDRs on each line, or file contains ip:port format list. 
+
 **MAIN**
 ```sh
 Usage: CloudRecon scrape|store|retr [options]
@@ -78,7 +89,8 @@ scrape [options] -i <IPs/CIDRs or File>
         How many goroutines running concurrently (default 100)
   -h    print usage!
   -i string
-        Either IPs & CIDRs separated by commas, or a file with IPs/CIDRs on each line (default "NONE"                                                                                                                         )
+        Either IPs & CIDRs separated by commas, or a file with IPs/CIDRs on each line (default "NONE")
+  -j    Generate JSON output ("IP, PORT, Organization, CommonName, SAN")
   -p string
         TLS ports to check for certificates (default "443")
   -t int
@@ -120,3 +132,4 @@ retr [options]
   -san string
         String to search for in common name column, returns like-results (default "NONE")
 ```
+

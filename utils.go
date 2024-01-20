@@ -67,7 +67,8 @@ func intakeFunction(chanInput chan string, ports []string, input string) {
 		fileScanner.Split(bufio.ScanLines)
 
 		for fileScanner.Scan() {
-			processInput(fileScanner.Text(), chanInput, ports)
+			line := fileScanner.Text()
+			processInput(line, chanInput, ports)
 		}
 		readFile.Close()
 
@@ -82,15 +83,22 @@ func isCIDR(value string) bool {
 	return strings.Contains(value, `/`)
 }
 
+func isHostPort(value string) bool {
+	return strings.Contains(value, `:`)
+}
+
 func processInput(argItem string, chanInput chan string, ports []string) {
 	argItem = strings.TrimSpace(argItem)
-	if isCIDR(argItem) {
+	if strings.Contains(argItem, ":") {
+		// If it contains a colon, treat it as IP:port combination
+		chanInput <- argItem
+	} else if isCIDR(argItem) {
 		err := IPsFromCIDR(argItem, chanInput, ports)
 		if err != nil {
 			panic("unable to parse CIDR" + argItem)
 		}
 	} else {
-		// feed atomic host to input channel
+		// Feed atomic host to input channel
 		for _, port := range ports {
 			chanInput <- argItem + ":" + port
 		}

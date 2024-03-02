@@ -56,7 +56,6 @@ func extractNames(cert *x509.Certificate) []string {
 
 func intakeFunction(chanInput chan string, ports []string, input string) {
 	if _, err := os.Stat(input); err == nil {
-		fmt.Printf("Scraping certs for IPs / CIDRs in file %s\n\n", input)
 		readFile, err := os.Open(input)
 		if err != nil {
 			fmt.Println(err)
@@ -67,7 +66,8 @@ func intakeFunction(chanInput chan string, ports []string, input string) {
 		fileScanner.Split(bufio.ScanLines)
 
 		for fileScanner.Scan() {
-			processInput(fileScanner.Text(), chanInput, ports)
+			line := fileScanner.Text()
+			processInput(line, chanInput, ports)
 		}
 		readFile.Close()
 
@@ -82,15 +82,20 @@ func isCIDR(value string) bool {
 	return strings.Contains(value, `/`)
 }
 
+func isHostPort(value string) bool {
+	return strings.Contains(value, `:`)
+}
+
 func processInput(argItem string, chanInput chan string, ports []string) {
 	argItem = strings.TrimSpace(argItem)
-	if isCIDR(argItem) {
+	if isHostPort(argItem) {
+		chanInput <- argItem
+	} else if isCIDR(argItem) {
 		err := IPsFromCIDR(argItem, chanInput, ports)
 		if err != nil {
 			panic("unable to parse CIDR" + argItem)
 		}
 	} else {
-		// feed atomic host to input channel
 		for _, port := range ports {
 			chanInput <- argItem + ":" + port
 		}

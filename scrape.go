@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"net"
@@ -10,6 +11,13 @@ import (
 	"time"
 )
 
+type CertificateInfo struct {
+	IP           string `json:"ip"`
+	Organization string `json:"organization"`
+	CommonName   string `json:"commonName"`
+	SAN          string `json:"san"`
+}
+
 type ScrapeArgs struct {
 	Concurrency int
 	Ports       []string
@@ -18,6 +26,7 @@ type ScrapeArgs struct {
 	Help        bool
 	Input       string
 	AllOutput   bool
+	JSONOutput  bool
 }
 
 func runCloudScrape(clArgs []string) {
@@ -27,7 +36,7 @@ func runCloudScrape(clArgs []string) {
 		Timeout: time.Duration(args.Timeout) * time.Second,
 	}
 
-	//Channel for input
+	// Channel for input
 	inputChannel := make(chan string)
 
 	var inputwg sync.WaitGroup
@@ -43,9 +52,22 @@ func runCloudScrape(clArgs []string) {
 					continue
 				} else {
 					names := extractNames(cert)
-					fmt.Printf("Got SSL certificate from %s: [%s]\n", ip, strings.Join(names, ", "))
-				}
+					org := cert.Subject.Organization
 
+					certInfo := CertificateInfo{
+						IP:           ip,
+						Organization: getOrganization(org),
+						CommonName:   names[0],
+						SAN:          joinNonEmpty(", ", names[1:]),
+					}
+
+					if args.JSONOutput {
+						outputJSON, _ := json.Marshal(certInfo)
+						fmt.Println(string(outputJSON))
+					} else {
+						fmt.Printf("Got SSL certificate from %s: [%s]\n", ip, strings.Join(names, ", "))
+					}
+				}
 			}
 			inputwg.Done()
 		}(args.AllOutput)
@@ -54,6 +76,27 @@ func runCloudScrape(clArgs []string) {
 	intakeFunction(inputChannel, args.Ports, args.Input)
 	close(inputChannel)
 	inputwg.Wait()
+}
+
+
+func getOrganization(org []string) string {
+	if len(org) > 0 {
+			return org[0]
+	}
+	return "NONE"
+}
+
+func joinNonEmpty(sep string, elements []string) string {
+	var result string
+	for _, element := range elements {
+			if element != "" {
+					if result != "" {
+							result += sep
+					}
+					result += element
+			}
+	}
+	return result
 }
 
 func parseScrapeCLI(clArgs []string) ScrapeArgs {
@@ -67,6 +110,7 @@ func parseScrapeCLI(clArgs []string) ScrapeArgs {
 	scrapeCommand.BoolVar(&args.Help, "h", false, "print usage!")
 	scrapeCommand.StringVar(&args.Input, "i", "NONE", "Either IPs & CIDRs separated by commas, or a file with IPs/CIDRs on each line")
 	scrapeCommand.BoolVar(&args.AllOutput, "a", false, "Add this flag if you want to see all output including failures")
+	scrapeCommand.BoolVar(&args.JSONOutput, "j", false, "Generate JSON output")
 
 	scrapeCommand.Parse(clArgs)
 

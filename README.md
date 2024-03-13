@@ -65,7 +65,7 @@ Retr - a tool to parse and search through the downloaded certs for keywords.
 ## Get Started
 ```
 ## Don't forget to run in TMUX / Screen session
-wget https://github.com/lord-alfred/ipranges/blob/main/all/ipv4_merged.txt
+wget https://raw.githubusercontent.com/lord-alfred/ipranges/main/all/ipv4_merged.txt
 CloudRecon scrape -i ipv4_merged.txt -j | tee -a certdb.json
 ```
 

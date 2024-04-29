@@ -7,9 +7,29 @@ import (
 	"net"
 	"os"
 	"strings"
-	"sync"
+
 	"time"
 )
+
+type Result struct {
+	IP          string
+	Hit         bool
+	Error       error
+	Certificate *CertificateInfo
+}
+
+type Worker struct {
+	dialer  *net.Dialer
+	input   <-chan string
+	results chan<- Result
+}
+
+type WorkerPool struct {
+	workers []*Worker
+	input   chan string
+	results chan Result
+	dialer  *net.Dialer
+}
 
 type CertificateInfo struct {
 	IP           string `json:"ip"`
@@ -29,6 +49,59 @@ type ScrapeArgs struct {
 	JSONOutput  bool
 }
 
+func NewWorker(dialer *net.Dialer, input <-chan string, results chan<- Result) *Worker {
+	return &Worker{
+		dialer:  dialer,
+		input:   input,
+		results: results,
+	}
+}
+
+func (w *Worker) run() {
+	for ip := range w.input {
+		cert, err := getSSLCert(ip, w.dialer)
+		if err != nil {
+			w.results <- Result{IP: ip, Error: err}
+			continue
+		}
+
+		names := extractNames(cert)
+		org := cert.Subject.Organization
+
+		certInfo := CertificateInfo{
+			IP:           ip,
+			Organization: getOrganization(org),
+			CommonName:   names[0],
+			SAN:          joinNonEmpty(", ", names[1:]),
+		}
+
+		w.results <- Result{IP: ip, Hit: true, Certificate: &certInfo}
+	}
+}
+
+func NewWorkerPool(size int, dialer *net.Dialer, input chan string, results chan Result) *WorkerPool {
+	wp := &WorkerPool{
+		workers: make([]*Worker, size),
+		input:   input,
+		results: results,
+		dialer:  dialer,
+	}
+	for i := range wp.workers {
+		wp.workers[i] = NewWorker(wp.dialer, wp.input, wp.results)
+	}
+	return wp
+}
+
+func (wp *WorkerPool) Start() {
+	for _, worker := range wp.workers {
+		go worker.run()
+	}
+}
+
+func (wp *WorkerPool) Stop() {
+	close(wp.input)
+}
+
 func runCloudScrape(clArgs []string) {
 	args := parseScrapeCLI(clArgs)
 
@@ -36,52 +109,38 @@ func runCloudScrape(clArgs []string) {
 		Timeout: time.Duration(args.Timeout) * time.Second,
 	}
 
-	// Channel for input
 	inputChannel := make(chan string)
+	resultChannel := make(chan Result)
 
-	var inputwg sync.WaitGroup
-	for i := 0; i < args.Concurrency; i++ {
-		inputwg.Add(1)
-		go func(AllOutput bool) {
-			for ip := range inputChannel {
-				cert, err := getSSLCert(ip, args.Timeout, dialer)
-				if err != nil {
-					if AllOutput {
-						fmt.Printf("Failed to get SSL certificate from %s\n", ip)
-					}
-					continue
-				} else {
-					names := extractNames(cert)
-					org := cert.Subject.Organization
+	workerPool := NewWorkerPool(args.Concurrency, dialer, inputChannel, resultChannel)
+	workerPool.Start()
 
-					certInfo := CertificateInfo{
-						IP:           ip,
-						Organization: getOrganization(org),
-						CommonName:   names[0],
-						SAN:          joinNonEmpty(", ", names[1:]),
-					}
+	go intakeFunction(inputChannel, args.Ports, args.Input)
 
-					if args.JSONOutput {
-						outputJSON, _ := json.Marshal(certInfo)
-						fmt.Println(string(outputJSON))
-					} else {
-						fmt.Printf("Got SSL certificate from %s: [%s]\n", ip, strings.Join(names, ", "))
-					}
-				}
+	defer func() {
+		workerPool.Stop()
+		close(resultChannel)
+	}()
+
+	for result := range resultChannel {
+		if result.Error != nil {
+			fmt.Printf("Failed to get SSL certificate from %s: %v\n", result.IP, result.Error)
+		} else if result.Hit {
+			if args.JSONOutput {
+				outputJSON, _ := json.Marshal(result.Certificate)
+				fmt.Println(string(outputJSON))
+			} else {
+				fmt.Printf("Got SSL certificate from %s: [%s]\n", result.IP, result.Certificate.CommonName)
 			}
-			inputwg.Done()
-		}(args.AllOutput)
+		} else if args.AllOutput {
+			fmt.Printf("No SSL certificate found for %s\n", result.IP)
+		}
 	}
-
-	intakeFunction(inputChannel, args.Ports, args.Input)
-	close(inputChannel)
-	inputwg.Wait()
 }
-
 
 func getOrganization(org []string) string {
 	if len(org) > 0 {
-			return org[0]
+		return org[0]
 	}
 	return "NONE"
 }
@@ -89,12 +148,12 @@ func getOrganization(org []string) string {
 func joinNonEmpty(sep string, elements []string) string {
 	var result string
 	for _, element := range elements {
-			if element != "" {
-					if result != "" {
-							result += sep
-					}
-					result += element
+		if element != "" {
+			if result != "" {
+				result += sep
 			}
+			result += element
+		}
 	}
 	return result
 }

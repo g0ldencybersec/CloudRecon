@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-func getSSLCert(ip string, timeout int, dialer *net.Dialer) (*x509.Certificate, error) {
+func getSSLCert(ip string, dialer *net.Dialer) (*x509.Certificate, error) {
 	conn, err := tls.DialWithDialer(dialer, "tcp", ip, &tls.Config{
 		InsecureSkipVerify: true,
 	})

@@ -25,13 +25,11 @@ type StoreArgs struct {
 
 // struct to hold data for a database write operation
 type dbWriteRequest struct {
-    ip           string
-    organization string
-    commonName   string
-    san          string
+	ip           string
+	organization string
+	commonName   string
+	san          string
 }
-
-
 
 func runCloudStore(clArgs []string) {
 	args := parseStoreCLI(clArgs)
@@ -57,41 +55,41 @@ func runCloudStore(clArgs []string) {
 	//Channel for input
 	inputChannel := make(chan string)
 
-    // Start the dedicated database writer goroutine
-    go func(db *sql.DB) {
-        for req := range writeRequests {
-            _, err := db.Exec("INSERT INTO certificates (ip, organization, common_name, san) VALUES (?, ?, ?, ?) ON CONFLICT(ip) DO UPDATE SET organization = excluded.organization, common_name = excluded.common_name, san = excluded.san", req.ip, req.organization, req.commonName, req.san)
-            if err != nil {
-                panic(err) // Or handle the error more gracefully
-            }
-        }
-    }(sqliteDatabase)
+	// Start the dedicated database writer goroutine
+	go func(db *sql.DB) {
+		for req := range writeRequests {
+			_, err := db.Exec("INSERT INTO certificates (ip, organization, common_name, san) VALUES (?, ?, ?, ?) ON CONFLICT(ip) DO UPDATE SET organization = excluded.organization, common_name = excluded.common_name, san = excluded.san", req.ip, req.organization, req.commonName, req.san)
+			if err != nil {
+				panic(err) // Or handle the error more gracefully
+			}
+		}
+	}(sqliteDatabase)
 
 	var inputwg sync.WaitGroup
-    for i := 0; i < args.Concurrency; i++ {
-        inputwg.Add(1)
-        go func() {
-            defer inputwg.Done()
-            for ip := range inputChannel {
-                cert, err := getSSLCert(ip, args.Timeout, dialer)
-                if err != nil {
-                    continue
-                }
-                names := extractNames(cert)
-                org := "NONE" // Default value if org is not available
-                if len(cert.Subject.Organization) > 0 {
-                    org = cert.Subject.Organization[0]
-                }
-                // Send the write request to the channel
-                writeRequests <- dbWriteRequest{
-                    ip:           ip,
-                    organization: org,
-                    commonName:   names[0], // Assuming names[0] is the common name
-                    san:          strings.Join(names[1:], ","),
-                }
-            }
-        }()
-    }
+	for i := 0; i < args.Concurrency; i++ {
+		inputwg.Add(1)
+		go func() {
+			defer inputwg.Done()
+			for ip := range inputChannel {
+				cert, err := getSSLCert(ip, dialer)
+				if err != nil {
+					continue
+				}
+				names := extractNames(cert)
+				org := "NONE" // Default value if org is not available
+				if len(cert.Subject.Organization) > 0 {
+					org = cert.Subject.Organization[0]
+				}
+				// Send the write request to the channel
+				writeRequests <- dbWriteRequest{
+					ip:           ip,
+					organization: org,
+					commonName:   names[0], // Assuming names[0] is the common name
+					san:          strings.Join(names[1:], ","),
+				}
+			}
+		}()
+	}
 
 	intakeFunction(inputChannel, args.Ports, args.Input)
 	close(inputChannel)
